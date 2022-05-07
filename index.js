@@ -19,6 +19,7 @@ async function run() {
     try {
         await client.connect()
         const carCollection = client.db("inventory").collection("cars")
+        const usersCarCollection = client.db("usersCar").collection("cars")
         app.get("/inventory", async (req, res) => {
             const limit = parseInt(req.query.size)
             const query = {}
@@ -47,8 +48,21 @@ async function run() {
         })
 
         app.post("/addcar", async (req, res) => {
-            const car = req.body.data
-            const result = await carCollection.insertOne(car)
+            const car = req.body.cardata
+            const result = await usersCarCollection.insertOne(car)
+            res.send(result)
+        })
+        app.get("/userscar", async (req, res) => {
+            const email = req.query.email
+            const query={email:email}
+            const cursor=  usersCarCollection.find(query)
+            const result=await cursor.toArray()
+            res.send(result)
+        })
+        app.delete("/userscar/:id", async (req, res) => {
+            const id=req.params.id
+            const query={_id:ObjectId(id)}
+            const result=await usersCarCollection.deleteOne(query)
             res.send(result)
         })
         app.delete("/deletecar/:id",async (req, res) => {
