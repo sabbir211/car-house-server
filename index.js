@@ -32,17 +32,23 @@ async function run() {
             const result = await carCollection.findOne(query)
             res.send(result)
         })
-        app.put("/update/:id",async(req,res)=>{
-            const newQuantity=req.body.newQuantity
-            const id=req.params.id
+        app.put("/update/:id", async (req, res) => {
+            const newQuantity = req.body.newQuantity
+            const id = req.params.id
             // console.log(newQuantity,id);
-            const filter={_id:ObjectId(id)}
-            const updateDoc={
-                $set:{
-                    quantity:newQuantity
+            const filter = { _id: ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    quantity: newQuantity
                 }
             }
-            const result=await carCollection.updateOne(filter,updateDoc)
+            const result = await carCollection.updateOne(filter, updateDoc)
+            res.send(result)
+        })
+
+        app.post("/addcar", async (req, res) => {
+            const car = req.body.data
+            const result = await carCollection.insertOne(car)
             res.send(result)
         })
     }
