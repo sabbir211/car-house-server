@@ -5,9 +5,29 @@ const mongodb = require("mongodb")
 const ObjectId = require("mongodb").ObjectId
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const cors = require("cors")
+const jwt = require('jsonwebtoken');
 const port = process.env.PORT || 5000
 app.use(cors())
 app.use(express.json())
+
+ // verify token 
+ const verifyJwt=async(req,res,next)=>{
+    const header=req.headers.authorization
+    if (!header) {
+        return res.status(401).send({message:"Unauthorized access "})
+    }
+
+   const token=header.split(" ")[1]
+   jwt.verify(token,process.env.PRIVATE_KEY,(error,decoded)=>{
+       if(error){
+           return res.status(403).send({message:"Forbidden"})
+       }
+       if (decoded) {
+           req.decoded=decoded
+       }
+       next()
+   })
+}
 
 app.get("/", (req, res) => {
     res.send("i am running well")
@@ -52,12 +72,18 @@ async function run() {
             const result = await usersCarCollection.insertOne(car)
             res.send(result)
         })
-        app.get("/userscar", async (req, res) => {
+        app.get("/userscar",verifyJwt, async (req, res) => {
+           const decoded=req.decoded.email
             const email = req.query.email
+        if (email===decoded) {
             const query={email:email}
             const cursor=  usersCarCollection.find(query)
             const result=await cursor.toArray()
             res.send(result)
+        }
+            else{
+                res.status(403).send({message:"Forbidden"})
+            }
         })
         app.delete("/userscar/:id", async (req, res) => {
             const id=req.params.id
@@ -71,6 +97,15 @@ async function run() {
             const result= await carCollection.deleteOne(query)
             res.send(result)
         })
+
+        //  Authorization  with jwt   
+        app.post("/login",(req,res)=>{
+            const email=req.body.email
+            const token=jwt.sign({email},process.env.PRIVATE_KEY,{ expiresIn:"2d" })
+            res.send(token)
+        })
+       
+
     }
     finally {
 
